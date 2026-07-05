@@ -62,6 +62,7 @@ npm run deploy:cf
 
 - In local Node development, storage falls back to the filesystem.
 - In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
+- The Worker deploy uses `nodejs_compat` because the OpenNext server bundle still imports Node built-ins at runtime.
 - The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
 - `npm run build` now performs the OpenNext adapter build used by Cloudflare Workers.
 - Use `npm run build:next` only when you specifically want a plain Next.js production build outside the Cloudflare deployment path.

@@ -1,8 +1,9 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "bracket-blitz",
+  "name": "mygameapp",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-04-17",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
