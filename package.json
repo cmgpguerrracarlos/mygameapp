@@ -4,15 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
     "build:next": "next build",
     "start": "next start",
     "lint": "eslint",
-    "preview": "npm run build:cf && opennextjs-cloudflare preview",
-    "deploy": "npm run build:cf && opennextjs-cloudflare deploy",
-    "build:cf": "opennextjs-cloudflare build",
-    "preview:cf": "npm run build:cf && opennextjs-cloudflare preview",
-    "deploy:cf": "npm run build:cf && opennextjs-cloudflare deploy",
+    "preview": "npm run build && opennextjs-cloudflare preview",
+    "deploy": "npm run build && opennextjs-cloudflare deploy",
+    "build:cf": "npm run build",
+    "preview:cf": "npm run preview",
+    "deploy:cf": "npm run deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
