@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { EditableCompetitor } from "@/lib/types";
 
 const sizeOptions = [2, 4, 8, 16, 32] as const;
@@ -11,8 +10,6 @@ function makeCompetitor(): EditableCompetitor {
   return {
     id: crypto.randomUUID(),
     name: "",
-    photoUrl: "",
-    photoStoragePath: null,
   };
 }
 
@@ -22,7 +19,6 @@ export function SetupClient() {
   const [competitors, setCompetitors] = useState<EditableCompetitor[]>(() =>
     Array.from({ length: 8 }, () => makeCompetitor()),
   );
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,40 +43,6 @@ export function SetupClient() {
     setCompetitors((current) =>
       current.map((competitor) => (competitor.id === id ? { ...competitor, ...patch } : competitor)),
     );
-  }
-
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>, competitorId: string) {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    setBusyId(competitorId);
-    setError("");
-
-    const formData = new FormData();
-    formData.append("competitorId", competitorId);
-    formData.append("file", file);
-
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const payload = await response.json();
-
-    if (!response.ok) {
-      setError(payload.error ?? "Upload failed.");
-      setBusyId(null);
-      return;
-    }
-
-    updateCompetitor(competitorId, {
-      photoUrl: payload.photoUrl,
-      photoStoragePath: payload.photoStoragePath,
-    });
-    setBusyId(null);
   }
 
   async function handleSubmit() {
@@ -151,13 +113,8 @@ export function SetupClient() {
         {competitors.map((competitor, index) => (
           <article key={competitor.id} className="rounded-[1.6rem] border border-[var(--line)] bg-white/88 p-4">
             <div className="flex items-center gap-4">
-              <div className="relative h-20 w-20 overflow-hidden rounded-[1.4rem] border border-[var(--line)] bg-[var(--accent-soft)]">
-                <Image
-                  src={competitor.photoUrl || "/placeholder-avatar.svg"}
-                  alt={competitor.name || `Competitor ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
+              <div className="flex h-20 w-20 items-center justify-center rounded-[1.4rem] border border-[var(--line)] bg-[var(--accent-soft)] text-2xl font-bold text-[var(--accent-strong)]">
+                {index + 1}
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">
@@ -171,18 +128,6 @@ export function SetupClient() {
                 />
               </div>
             </div>
-            <label className="mt-4 flex cursor-pointer items-center justify-between rounded-2xl border border-dashed border-[var(--line)] bg-[#fffaf2] px-4 py-3 text-sm font-medium text-[var(--ink-soft)] hover:border-[var(--accent)]">
-              <span>{busyId === competitor.id ? "Uploading..." : "Upload photo"}</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(event) => handleFileChange(event, competitor.id)}
-                className="hidden"
-              />
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
-                Optional
-              </span>
-            </label>
           </article>
         ))}
       </div>

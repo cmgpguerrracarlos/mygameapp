@@ -22,7 +22,7 @@ export default async function SetupPage() {
     <AppShell
       eyebrow="Tournament Setup"
       heading="Build your bracket"
-      subheading="Pick an exact bracket size, add names, and upload photos from the device. Missing photos fall back to a placeholder so setup never stalls."
+      subheading="Pick an exact bracket size and enter every participant name for this session. Once the list is complete, generate the bracket and start the tournament."
     >
       <SetupClient />
     </AppShell>

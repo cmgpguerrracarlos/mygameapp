@@ -1,12 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { TournamentSummary } from "@/lib/types";
 
 type ResultsClientProps = {
   summary: TournamentSummary;
 };
+
+function initialsForName(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part.trim()[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 export function ResultsClient({ summary }: ResultsClientProps) {
   const podium = [
@@ -28,13 +37,8 @@ export function ResultsClient({ summary }: ResultsClientProps) {
             <article key={slot.label} className={`rounded-[1.8rem] border p-4 ${slot.accent}`}>
               {slot.competitor ? (
                 <>
-                  <div className="relative h-56 overflow-hidden rounded-[1.4rem]">
-                    <Image
-                      src={slot.competitor.photoUrl}
-                      alt={slot.competitor.name}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="flex h-56 items-center justify-center rounded-[1.4rem] bg-white/70 text-6xl font-bold text-[var(--accent-strong)]">
+                    {initialsForName(slot.competitor.name)}
                   </div>
                   <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-soft)]">
                     {slot.label}

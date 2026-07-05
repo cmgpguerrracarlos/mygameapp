@@ -14,7 +14,6 @@ const SESSION_KEY_PREFIX = "session:";
 
 type CloudflareBindings = CloudflareEnv & {
   TOURNAMENT_SESSIONS_KV?: KVNamespace;
-  TOURNAMENT_UPLOADS?: R2Bucket;
 };
 
 type NodeFsModule = typeof import("node:fs/promises");
@@ -22,20 +21,11 @@ type NodePathModule = typeof import("node:path");
 type LocalStorageContext = {
   fs: NodeFsModule;
   path: NodePathModule;
-  uploadRoot: string;
   sessionsDir: string;
 };
 
 function isExpired(expiresAt: string) {
   return new Date(expiresAt).getTime() <= Date.now();
-}
-
-function makeStorageKey(sessionId: string, competitorId: string, safeFileName: string) {
-  return `tournaments/${sessionId}/${competitorId}/${safeFileName}`;
-}
-
-function imageRouteForKey(storageKey: string) {
-  return `/api/images/${storageKey.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 async function getLocalStorageContext(): Promise<LocalStorageContext> {
@@ -44,7 +34,6 @@ async function getLocalStorageContext(): Promise<LocalStorageContext> {
   return {
     fs,
     path,
-    uploadRoot: path.join(process.cwd(), ".data", "uploads"),
     sessionsDir: path.join(process.cwd(), ".data", "sessions"),
   };
 }
@@ -54,14 +43,12 @@ async function getCloudflareBindings(): Promise<CloudflareBindings | null> {
     const { getCloudflareContext } = await import("@opennextjs/cloudflare");
     const { env } = await getCloudflareContext({ async: true });
 
-    if (env?.TOURNAMENT_SESSIONS_KV && env?.TOURNAMENT_UPLOADS) {
+    if (env?.TOURNAMENT_SESSIONS_KV) {
       return env as CloudflareBindings;
     }
 
-    if (env) {
-      throw new Error(
-        "Cloudflare bindings are missing. Configure TOURNAMENT_SESSIONS_KV and TOURNAMENT_UPLOADS before using this deployment.",
-      );
+    if (env && !env.TOURNAMENT_SESSIONS_KV) {
+      throw new Error("Cloudflare bindings are missing. Configure TOURNAMENT_SESSIONS_KV before using this deployment.");
     }
 
     return null;
@@ -75,9 +62,8 @@ async function getCloudflareBindings(): Promise<CloudflareBindings | null> {
 }
 
 async function ensureLocalDirectories() {
-  const { fs, uploadRoot, sessionsDir } = await getLocalStorageContext();
+  const { fs, sessionsDir } = await getLocalStorageContext();
   await fs.mkdir(sessionsDir, { recursive: true });
-  await fs.mkdir(uploadRoot, { recursive: true });
 }
 
 async function sessionFile(sessionId: string) {
@@ -93,19 +79,6 @@ async function listKvKeys(namespace: KVNamespace, prefix: string) {
     const page = await namespace.list({ prefix, cursor });
     keys.push(...page.keys.map((entry) => entry.name));
     cursor = page.list_complete ? undefined : page.cursor;
-  } while (cursor);
-
-  return keys;
-}
-
-async function listR2Keys(bucket: R2Bucket, prefix: string) {
-  const keys: string[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const page = await bucket.list({ prefix, cursor });
-    keys.push(...page.objects.map((entry) => entry.key));
-    cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
 
   return keys;
@@ -144,26 +117,6 @@ async function writeStoredState(state: StoredTournamentState) {
   await fs.writeFile(await sessionFile(state.session.id), JSON.stringify(state, null, 2), "utf8");
 }
 
-async function deleteUploadedPhotos(sessionId: string) {
-  const bindings = await getCloudflareBindings();
-
-  if (bindings?.TOURNAMENT_UPLOADS) {
-    const keys = await listR2Keys(bindings.TOURNAMENT_UPLOADS, `tournaments/${sessionId}/`);
-
-    if (keys.length > 0) {
-      await bindings.TOURNAMENT_UPLOADS.delete(keys);
-    }
-
-    return;
-  }
-
-  const { fs, path, uploadRoot } = await getLocalStorageContext();
-  await fs.rm(path.join(uploadRoot, "tournaments", sessionId), {
-    recursive: true,
-    force: true,
-  });
-}
-
 async function removeStoredState(sessionId: string) {
   const bindings = await getCloudflareBindings();
 
@@ -194,7 +147,6 @@ export async function cleanupExpiredSessions() {
           return;
         }
 
-        await deleteUploadedPhotos(state.session.id);
         await bindings.TOURNAMENT_SESSIONS_KV?.delete(key);
       }),
     );
@@ -222,7 +174,6 @@ export async function cleanupExpiredSessions() {
         return;
       }
 
-      await deleteUploadedPhotos(parsed.session.id);
       await fs.unlink(filePath).catch(() => undefined);
     }),
   );
@@ -315,80 +266,9 @@ export async function endSession(sessionId: string) {
 
   if (existing) {
     existing.session.status = "ended";
-    await deleteUploadedPhotos(existing.session.id);
   }
 
   await removeStoredState(sessionId);
-}
-
-export async function uploadCompetitorPhoto(
-  sessionId: string,
-  competitorId: string,
-  fileName: string,
-  contentType: string,
-  bytes: ArrayBuffer,
-) {
-  const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
-  const storageKey = makeStorageKey(sessionId, competitorId, safeFileName);
-  const bindings = await getCloudflareBindings();
-
-  if (bindings?.TOURNAMENT_UPLOADS) {
-    await bindings.TOURNAMENT_UPLOADS.put(storageKey, bytes, {
-      httpMetadata: {
-        contentType: contentType || "application/octet-stream",
-      },
-    });
-  } else {
-    await ensureLocalDirectories();
-    const { fs, path, uploadRoot } = await getLocalStorageContext();
-    const diskPath = path.join(uploadRoot, storageKey);
-    await fs.mkdir(path.dirname(diskPath), { recursive: true });
-    await fs.writeFile(diskPath, new Uint8Array(bytes));
-  }
-
-  return {
-    photoUrl: imageRouteForKey(storageKey),
-    photoStoragePath: storageKey,
-  };
-}
-
-export async function getUploadedPhoto(objectKey: string) {
-  const bindings = await getCloudflareBindings();
-
-  if (bindings?.TOURNAMENT_UPLOADS) {
-    const object = await bindings.TOURNAMENT_UPLOADS.get(objectKey);
-
-    if (!object) {
-      return null;
-    }
-
-    return {
-      body: object.body,
-      contentType: object.httpMetadata?.contentType || "application/octet-stream",
-    };
-  }
-
-  const { fs, path, uploadRoot } = await getLocalStorageContext();
-  const diskPath = path.join(uploadRoot, objectKey);
-  const body = await fs.readFile(diskPath).catch(() => null);
-
-  if (!body) {
-    return null;
-  }
-
-  const extension = path.extname(diskPath).toLowerCase();
-  const contentType =
-    extension === ".png"
-      ? "image/png"
-      : extension === ".jpg" || extension === ".jpeg"
-        ? "image/jpeg"
-        : extension === ".webp"
-          ? "image/webp"
-          : extension === ".gif"
-            ? "image/gif"
-            : "application/octet-stream";
-
-  return { body, contentType };
 }
 
 export async function createTournament(

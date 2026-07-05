@@ -26,8 +26,6 @@ export type CompetitorRecord = {
   tournamentId: string;
   sessionId: string;
   name: string;
-  photoUrl: string;
-  photoStoragePath: string | null;
   rating: number;
   wins: number;
   losses: number;
@@ -66,8 +64,6 @@ export type StoredTournamentState = {
 export type EditableCompetitor = {
   id: string;
   name: string;
-  photoUrl: string;
-  photoStoragePath: string | null;
 };
 
 export type MatchView = {

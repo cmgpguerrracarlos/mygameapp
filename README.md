@@ -6,7 +6,7 @@ Mobile-first anonymous tournament app built with Next.js App Router and TypeScri
 
 - Anonymous temporary sessions with HTTP-only cookies.
 - 2, 4, 8, 16, or 32 competitor elimination brackets.
-- Device photo uploads with temporary storage.
+- Name-only participant setup inside the active session.
 - Rating-influenced match simulation with step-by-step progression.
 - Third-place playoff plus final podium screen.
 - Automatic cleanup path for expired or ended sessions.
@@ -21,7 +21,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The local runtime stores session JSON and uploaded images under `.data/`, and deletes them when a session ends or expires.
+The local runtime stores session JSON under `.data/` and deletes it when a session ends or expires.
 
 ### Checks
 
@@ -36,19 +36,18 @@ npm run build:next
 This project is wired for Cloudflare Workers using OpenNext.
 
 1. Create one KV namespace for session records.
-2. Create one R2 bucket for temporary competitor photos.
-3. In the Cloudflare dashboard, add bindings with these exact names:
-   `TOURNAMENT_SESSIONS_KV` for the KV namespace and `TOURNAMENT_UPLOADS` for the R2 bucket.
-4. If you prefer managing bindings in code, add the real KV and R2 identifiers to `wrangler.jsonc`.
-5. Optionally regenerate binding types with `npm run cf-typegen`.
-6. For Cloudflare Workers Builds, use:
+2. In the Cloudflare dashboard, add the binding with this exact name:
+   `TOURNAMENT_SESSIONS_KV` for the KV namespace.
+3. If you prefer managing bindings in code, add the real KV identifier to `wrangler.jsonc`.
+4. Optionally regenerate binding types with `npm run cf-typegen`.
+5. For Cloudflare Workers Builds, use:
 
 ```bash
 Build command: npm run build
 Deploy command: npx wrangler deploy
 ```
 
-7. For local or CI deploys, use:
+6. For local or CI deploys, use:
 
 ```bash
 npm run preview
@@ -63,7 +62,7 @@ npm run deploy:cf
 ### Notes
 
 - In local Node development, storage falls back to the filesystem.
-- In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
+- In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV`.
 - `wrangler.jsonc` intentionally does not ship placeholder KV/R2 IDs, because fake resource names make Cloudflare deploys fail before the Worker is published.
 - The Worker deploy uses `nodejs_compat` because the OpenNext server bundle still imports Node built-ins at runtime.
 - The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.

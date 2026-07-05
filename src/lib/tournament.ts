@@ -280,8 +280,6 @@ export function startTournament(
     tournamentId,
     sessionId: state.session.id,
     name: competitor.name,
-    photoUrl: competitor.photoUrl || "/placeholder-avatar.svg",
-    photoStoragePath: competitor.photoStoragePath,
     rating: 1000,
     wins: 0,
     losses: 0,

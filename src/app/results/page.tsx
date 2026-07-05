@@ -22,7 +22,7 @@ export default async function ResultsPage() {
     <AppShell
       eyebrow="Final Podium"
       heading="Results locked in"
-      subheading="The champion, runner-up, and third-place finisher stay available until the session ends or expires."
+      subheading="The champion, runner-up, and third-place finisher stay available until this session ends or expires."
     >
       <ResultsClient summary={summary} />
     </AppShell>

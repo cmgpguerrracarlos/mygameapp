@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +8,16 @@ import { TournamentSummary } from "@/lib/types";
 type TournamentClientProps = {
   initialSummary: TournamentSummary;
 };
+
+function initialsForName(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part.trim()[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 function scoreLabel(summary: TournamentSummary) {
   if (!summary.currentMatch) {
@@ -96,13 +105,8 @@ export function TournamentClient({ initialSummary }: TournamentClientProps) {
                           : "border-[var(--line)] bg-white/85"
                     }`}
                   >
-                    <div className="relative h-44 overflow-hidden rounded-[1.4rem]">
-                      <Image
-                        src={competitor.photoUrl}
-                        alt={competitor.name}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="flex h-44 items-center justify-center rounded-[1.4rem] bg-[var(--accent-soft)] text-5xl font-bold text-[var(--accent-strong)]">
+                      {initialsForName(competitor.name)}
                     </div>
                     <div className="mt-4">
                       <h3 className="text-xl font-bold">{competitor.name}</h3>
