@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import {
   CompetitorRecord,
   EditableCompetitor,
@@ -58,7 +57,7 @@ function createMatch(
   roundLabel: string,
 ): MatchRecord {
   return {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     tournamentId,
     round,
     matchIndex,
@@ -261,7 +260,7 @@ export function startTournament(
   size: 2 | 4 | 8 | 16 | 32,
   editableCompetitors: EditableCompetitor[],
 ) {
-  const tournamentId = randomUUID();
+  const tournamentId = crypto.randomUUID();
   const shuffled = shuffle(editableCompetitors);
   const label = size === 2 ? "Championship Final" : labelForRound(size);
 

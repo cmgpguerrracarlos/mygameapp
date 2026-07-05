@@ -1,6 +1,3 @@
-import { randomUUID } from "crypto";
-import { mkdir, readFile, readdir, rm, stat, unlink, writeFile } from "fs/promises";
-import path from "path";
 import { cookies } from "next/headers";
 import { getTournamentSummary, startTournament, stepTournament } from "@/lib/tournament";
 import {
@@ -14,12 +11,19 @@ const SESSION_COOKIE = "bracket-blitz-session";
 const SESSION_TTL_SECONDS = 4 * 60 * 60;
 const SESSION_TTL_HOURS = SESSION_TTL_SECONDS / 3600;
 const SESSION_KEY_PREFIX = "session:";
-const uploadRoot = path.join(process.cwd(), ".data", "uploads");
-const sessionsDir = path.join(process.cwd(), ".data", "sessions");
 
 type CloudflareBindings = CloudflareEnv & {
   TOURNAMENT_SESSIONS_KV?: KVNamespace;
   TOURNAMENT_UPLOADS?: R2Bucket;
+};
+
+type NodeFsModule = typeof import("node:fs/promises");
+type NodePathModule = typeof import("node:path");
+type LocalStorageContext = {
+  fs: NodeFsModule;
+  path: NodePathModule;
+  uploadRoot: string;
+  sessionsDir: string;
 };
 
 function isExpired(expiresAt: string) {
@@ -32,6 +36,17 @@ function makeStorageKey(sessionId: string, competitorId: string, safeFileName: s
 
 function imageRouteForKey(storageKey: string) {
   return `/api/images/${storageKey.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+async function getLocalStorageContext(): Promise<LocalStorageContext> {
+  const [fs, path] = await Promise.all([import("node:fs/promises"), import("node:path")]);
+
+  return {
+    fs,
+    path,
+    uploadRoot: path.join(process.cwd(), ".data", "uploads"),
+    sessionsDir: path.join(process.cwd(), ".data", "sessions"),
+  };
 }
 
 async function getCloudflareBindings(): Promise<CloudflareBindings | null> {
@@ -50,11 +65,13 @@ async function getCloudflareBindings(): Promise<CloudflareBindings | null> {
 }
 
 async function ensureLocalDirectories() {
-  await mkdir(sessionsDir, { recursive: true });
-  await mkdir(uploadRoot, { recursive: true });
+  const { fs, uploadRoot, sessionsDir } = await getLocalStorageContext();
+  await fs.mkdir(sessionsDir, { recursive: true });
+  await fs.mkdir(uploadRoot, { recursive: true });
 }
 
-function sessionFile(sessionId: string) {
+async function sessionFile(sessionId: string) {
+  const { path, sessionsDir } = await getLocalStorageContext();
   return path.join(sessionsDir, `${sessionId}.json`);
 }
 
@@ -95,7 +112,8 @@ async function readStoredState(sessionId: string): Promise<StoredTournamentState
   }
 
   await ensureLocalDirectories();
-  const raw = await readFile(sessionFile(sessionId), "utf8");
+  const { fs } = await getLocalStorageContext();
+  const raw = await fs.readFile(await sessionFile(sessionId), "utf8");
   return JSON.parse(raw) as StoredTournamentState;
 }
 
@@ -112,7 +130,8 @@ async function writeStoredState(state: StoredTournamentState) {
   }
 
   await ensureLocalDirectories();
-  await writeFile(sessionFile(state.session.id), JSON.stringify(state, null, 2), "utf8");
+  const { fs } = await getLocalStorageContext();
+  await fs.writeFile(await sessionFile(state.session.id), JSON.stringify(state, null, 2), "utf8");
 }
 
 async function deleteUploadedPhotos(sessionId: string) {
@@ -128,7 +147,8 @@ async function deleteUploadedPhotos(sessionId: string) {
     return;
   }
 
-  await rm(path.join(uploadRoot, "tournaments", sessionId), {
+  const { fs, path, uploadRoot } = await getLocalStorageContext();
+  await fs.rm(path.join(uploadRoot, "tournaments", sessionId), {
     recursive: true,
     force: true,
   });
@@ -142,7 +162,8 @@ async function removeStoredState(sessionId: string) {
     return;
   }
 
-  await unlink(sessionFile(sessionId)).catch(() => undefined);
+  const { fs } = await getLocalStorageContext();
+  await fs.unlink(await sessionFile(sessionId)).catch(() => undefined);
 }
 
 export async function cleanupExpiredSessions() {
@@ -172,18 +193,19 @@ export async function cleanupExpiredSessions() {
   }
 
   await ensureLocalDirectories();
-  const files = await readdir(sessionsDir);
+  const { fs, path, sessionsDir } = await getLocalStorageContext();
+  const files = await fs.readdir(sessionsDir);
 
   await Promise.all(
     files.map(async (fileName) => {
       const filePath = path.join(sessionsDir, fileName);
-      const fileStats = await stat(filePath);
+      const fileStats = await fs.stat(filePath);
 
       if (!fileStats.isFile()) {
         return;
       }
 
-      const raw = await readFile(filePath, "utf8");
+      const raw = await fs.readFile(filePath, "utf8");
       const parsed = JSON.parse(raw) as StoredTournamentState;
 
       if (!parsed.session || (!isExpired(parsed.session.expiresAt) && parsed.session.status !== "ended")) {
@@ -191,7 +213,7 @@ export async function cleanupExpiredSessions() {
       }
 
       await deleteUploadedPhotos(parsed.session.id);
-      await unlink(filePath).catch(() => undefined);
+      await fs.unlink(filePath).catch(() => undefined);
     }),
   );
 }
@@ -199,7 +221,7 @@ export async function cleanupExpiredSessions() {
 export async function createSession() {
   await cleanupExpiredSessions();
 
-  const id = randomUUID();
+  const id = crypto.randomUUID();
   const createdAt = new Date();
   const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000);
 
@@ -308,9 +330,10 @@ export async function uploadCompetitorPhoto(
     });
   } else {
     await ensureLocalDirectories();
+    const { fs, path, uploadRoot } = await getLocalStorageContext();
     const diskPath = path.join(uploadRoot, storageKey);
-    await mkdir(path.dirname(diskPath), { recursive: true });
-    await writeFile(diskPath, Buffer.from(bytes));
+    await fs.mkdir(path.dirname(diskPath), { recursive: true });
+    await fs.writeFile(diskPath, new Uint8Array(bytes));
   }
 
   return {
@@ -335,8 +358,9 @@ export async function getUploadedPhoto(objectKey: string) {
     };
   }
 
+  const { fs, path, uploadRoot } = await getLocalStorageContext();
   const diskPath = path.join(uploadRoot, objectKey);
-  const body = await readFile(diskPath).catch(() => null);
+  const body = await fs.readFile(diskPath).catch(() => null);
 
   if (!body) {
     return null;

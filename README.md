@@ -28,7 +28,7 @@ The local runtime stores session JSON and uploaded images under `.data/`, and de
 ```bash
 npm run lint
 npm run build
-npm run build:next
+npm run build:cf
 ```
 
 ### Cloudflare deployment
@@ -42,7 +42,7 @@ This project is wired for Cloudflare Workers using OpenNext.
 5. For Cloudflare Workers Builds, use:
 
 ```bash
-Build command: npm run build
+Build command: npm run build:cf
 Deploy command: npx wrangler deploy
 ```
 
