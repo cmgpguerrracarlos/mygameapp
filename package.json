@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "npm run check",
     "check": "node --check site/script.js",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
