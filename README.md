@@ -38,9 +38,18 @@ This project is wired for Cloudflare Workers using OpenNext.
 2. Create one R2 bucket for temporary competitor photos.
 3. Replace the placeholder IDs and bucket names in `wrangler.jsonc`.
 4. Optionally regenerate binding types with `npm run cf-typegen`.
-5. Build or deploy with:
+5. For Cloudflare Workers Builds, use:
 
 ```bash
+Build command: npm run build:cf
+Deploy command: npx opennextjs-cloudflare deploy
+```
+
+6. For local or CI deploys, use:
+
+```bash
+npm run preview
+npm run deploy
 npm run build:cf
 npm run preview:cf
 npm run deploy:cf
@@ -51,6 +60,7 @@ npm run deploy:cf
 - In local Node development, storage falls back to the filesystem.
 - In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
 - The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
+- If Cloudflare logs `Could not find compiled Open Next config, did you run the build command?`, the build step did not run before deploy.
 
 ### Reference
 
