@@ -28,6 +28,7 @@ The local runtime stores session JSON and uploaded images under `.data/`, and de
 ```bash
 npm run lint
 npm run build
+npm run build:next
 ```
 
 ### Cloudflare deployment
@@ -41,8 +42,8 @@ This project is wired for Cloudflare Workers using OpenNext.
 5. For Cloudflare Workers Builds, use:
 
 ```bash
-Build command: npm run build:cf
-Deploy command: npx opennextjs-cloudflare deploy
+Build command: npm run build
+Deploy command: npx wrangler deploy
 ```
 
 6. For local or CI deploys, use:
@@ -50,6 +51,8 @@ Deploy command: npx opennextjs-cloudflare deploy
 ```bash
 npm run preview
 npm run deploy
+npm run build
+npm run build:next
 npm run build:cf
 npm run preview:cf
 npm run deploy:cf
@@ -60,7 +63,8 @@ npm run deploy:cf
 - In local Node development, storage falls back to the filesystem.
 - In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
 - The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
-- If Cloudflare logs `Could not find compiled Open Next config, did you run the build command?`, the build step did not run before deploy.
+- `npm run build` now performs the OpenNext adapter build used by Cloudflare Workers.
+- Use `npm run build:next` only when you specifically want a plain Next.js production build outside the Cloudflare deployment path.
 
 ### Reference
 
