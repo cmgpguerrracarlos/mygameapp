@@ -1,0 +1,58 @@
+## Bracket Blitz
+
+Mobile-first anonymous tournament app built with Next.js App Router and TypeScript.
+
+### Features
+
+- Anonymous temporary sessions with HTTP-only cookies.
+- 2, 4, 8, 16, or 32 competitor elimination brackets.
+- Device photo uploads with temporary storage.
+- Rating-influenced match simulation with step-by-step progression.
+- Third-place playoff plus final podium screen.
+- Automatic cleanup path for expired or ended sessions.
+
+### Local development
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+The local runtime stores session JSON and uploaded images under `.data/`, and deletes them when a session ends or expires.
+
+### Checks
+
+```bash
+npm run lint
+npm run build
+```
+
+### Cloudflare deployment
+
+This project is wired for Cloudflare Workers using OpenNext.
+
+1. Create one KV namespace for session records.
+2. Create one R2 bucket for temporary competitor photos.
+3. Replace the placeholder IDs and bucket names in `wrangler.jsonc`.
+4. Optionally regenerate binding types with `npm run cf-typegen`.
+5. Build or deploy with:
+
+```bash
+npm run build:cf
+npm run preview:cf
+npm run deploy:cf
+```
+
+### Notes
+
+- In local Node development, storage falls back to the filesystem.
+- In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
+- The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
+
+### Reference
+
+- Cloudflare Workers Next.js guide: https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/
+- Cloudflare Pages Next.js overview: https://developers.cloudflare.com/pages/framework-guides/nextjs/

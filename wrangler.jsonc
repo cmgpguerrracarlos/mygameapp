@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bracket-blitz",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-04-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "TOURNAMENT_SESSIONS_KV",
+      "id": "replace-with-your-kv-id",
+      "preview_id": "replace-with-your-preview-kv-id"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "TOURNAMENT_UPLOADS",
+      "bucket_name": "replace-with-your-r2-bucket",
+      "preview_bucket_name": "replace-with-your-preview-r2-bucket"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
