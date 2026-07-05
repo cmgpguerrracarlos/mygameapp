@@ -58,8 +58,18 @@ async function getCloudflareBindings(): Promise<CloudflareBindings | null> {
       return env as CloudflareBindings;
     }
 
+    if (env) {
+      throw new Error(
+        "Cloudflare bindings are missing. Configure TOURNAMENT_SESSIONS_KV and TOURNAMENT_UPLOADS before using this deployment.",
+      );
+    }
+
     return null;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Cloudflare bindings are missing.")) {
+      throw error;
+    }
+
     return null;
   }
 }

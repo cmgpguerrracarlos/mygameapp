@@ -37,16 +37,18 @@ This project is wired for Cloudflare Workers using OpenNext.
 
 1. Create one KV namespace for session records.
 2. Create one R2 bucket for temporary competitor photos.
-3. Replace the placeholder IDs and bucket names in `wrangler.jsonc`.
-4. Optionally regenerate binding types with `npm run cf-typegen`.
-5. For Cloudflare Workers Builds, use:
+3. In the Cloudflare dashboard, add bindings with these exact names:
+   `TOURNAMENT_SESSIONS_KV` for the KV namespace and `TOURNAMENT_UPLOADS` for the R2 bucket.
+4. If you prefer managing bindings in code, add the real KV and R2 identifiers to `wrangler.jsonc`.
+5. Optionally regenerate binding types with `npm run cf-typegen`.
+6. For Cloudflare Workers Builds, use:
 
 ```bash
 Build command: npm run build
 Deploy command: npx wrangler deploy
 ```
 
-6. For local or CI deploys, use:
+7. For local or CI deploys, use:
 
 ```bash
 npm run preview
@@ -62,6 +64,7 @@ npm run deploy:cf
 
 - In local Node development, storage falls back to the filesystem.
 - In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV` and `TOURNAMENT_UPLOADS`.
+- `wrangler.jsonc` intentionally does not ship placeholder KV/R2 IDs, because fake resource names make Cloudflare deploys fail before the Worker is published.
 - The Worker deploy uses `nodejs_compat` because the OpenNext server bundle still imports Node built-ins at runtime.
 - The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
 - `npm run build` now performs the OpenNext adapter build used by Cloudflare Workers.
