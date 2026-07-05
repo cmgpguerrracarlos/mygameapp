@@ -1,75 +1,40 @@
-## Bracket Blitz
+# Random Name Tournament
 
-Mobile-first anonymous tournament app built with Next.js App Router and TypeScript.
+Simple tournament game built with plain HTML, CSS, and JavaScript.
 
-### Features
+## Features
 
-- Anonymous temporary sessions with HTTP-only cookies.
-- 2, 4, 8, 16, or 32 competitor elimination brackets.
-- Name-only participant setup inside the active session.
-- Rating-influenced match simulation with step-by-step progression.
-- Third-place playoff plus final podium screen.
-- Automatic cleanup path for expired or ended sessions.
+- Supports brackets of 2, 4, 8, or 16 players.
+- Randomly shuffles the names into the bracket.
+- Simulates each match step by step.
+- Advances through the full tournament until the end.
+- Shows champion, runner-up, and third place.
 
-### Local development
+## Project structure
 
-Run the development server:
+- `site/index.html`: main interface
+- `site/styles.css`: UI styles
+- `site/script.js`: tournament logic
+- `site/404.html`: static 404 page
+
+## Local development
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Then open the local URL shown by Wrangler.
 
-The local runtime stores session JSON under `.data/` and deletes it when a session ends or expires.
-
-### Checks
+## Quick check
 
 ```bash
-npm run lint
-npm run build
-npm run build:next
+npm run check
 ```
 
-### Cloudflare deployment
-
-This project is wired for Cloudflare Workers using OpenNext.
-
-1. Create one KV namespace for session records.
-2. In the Cloudflare dashboard, add the binding with this exact name:
-   `TOURNAMENT_SESSIONS_KV` for the KV namespace.
-3. If you prefer managing bindings in code, add the real KV identifier to `wrangler.jsonc`.
-4. Optionally regenerate binding types with `npm run cf-typegen`.
-5. For Cloudflare Workers Builds, use:
+## Deploy to Cloudflare
 
 ```bash
-Build command: npm run build
-Deploy command: npx wrangler deploy
-```
-
-6. For local or CI deploys, use:
-
-```bash
-npm run preview
 npm run deploy
-npm run build
-npm run build:next
-npm run build:cf
-npm run preview:cf
-npm run deploy:cf
 ```
 
-### Notes
-
-- In local Node development, storage falls back to the filesystem.
-- In Cloudflare, the app automatically uses `TOURNAMENT_SESSIONS_KV`.
-- `wrangler.jsonc` intentionally does not ship placeholder KV/R2 IDs, because fake resource names make Cloudflare deploys fail before the Worker is published.
-- The Worker deploy uses `nodejs_compat` because the OpenNext server bundle still imports Node built-ins at runtime.
-- The installed `wrangler` version expects Node 22+, so use Node 22 in CI or on the machine that runs Cloudflare preview/deploy commands.
-- `npm run build` now performs the OpenNext adapter build used by Cloudflare Workers.
-- Use `npm run build:next` only when you specifically want a plain Next.js production build outside the Cloudflare deployment path.
-
-### Reference
-
-- Cloudflare Workers Next.js guide: https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/
-- Cloudflare Pages Next.js overview: https://developers.cloudflare.com/pages/framework-guides/nextjs/
+This project uses Cloudflare Workers static assets with `site/` as the published directory.

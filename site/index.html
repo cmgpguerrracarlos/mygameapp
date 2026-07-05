@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Random Name Tournament</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero-card">
+        <p class="eyebrow">Vanilla Tournament</p>
+        <h1>Random bracket battles for names only</h1>
+        <p class="hero-copy">
+          Add 2, 4, 8 or 16 names, shuffle the bracket, watch every match unfold,
+          and finish with a top-three podium.
+        </p>
+      </header>
+
+      <section id="setup-screen" class="panel panel-strong">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Step 1</p>
+            <h2>Build the bracket</h2>
+          </div>
+          <button id="start-btn" class="primary-btn" type="button">Start Tournament</button>
+        </div>
+
+        <div class="size-row">
+          <span class="label">Players</span>
+          <div id="size-options" class="size-options" aria-label="Bracket size"></div>
+        </div>
+
+        <div id="name-grid" class="name-grid"></div>
+        <p id="setup-error" class="error-message" aria-live="polite"></p>
+      </section>
+
+      <section id="tournament-screen" class="panel hidden">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Step 2</p>
+            <h2 id="match-title">Match in progress</h2>
+            <p id="match-subtitle" class="muted-copy"></p>
+          </div>
+          <button id="advance-btn" class="primary-btn" type="button">Next</button>
+        </div>
+
+        <div class="live-layout">
+          <article class="match-card">
+            <div class="score-banner">
+              <span class="banner-label">Live Score</span>
+              <strong id="score-display">0 - 0</strong>
+            </div>
+
+            <div class="fighters">
+              <div id="fighter-a" class="fighter"></div>
+              <div class="vs-pill">VS</div>
+              <div id="fighter-b" class="fighter"></div>
+            </div>
+
+            <div class="commentary-box">
+              <p class="banner-label">Commentary</p>
+              <p id="commentary-text" class="commentary-text"></p>
+              <div id="progress-dots" class="progress-dots" aria-hidden="true"></div>
+            </div>
+          </article>
+
+          <aside class="bracket-card">
+            <p class="section-kicker">Bracket Overview</p>
+            <div id="round-list" class="round-list"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="results-screen" class="panel hidden">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Step 3</p>
+            <h2>Final podium</h2>
+            <p class="muted-copy">The tournament is done. Here are the top three finishers.</p>
+          </div>
+          <button id="restart-btn" class="secondary-btn" type="button">Play Again</button>
+        </div>
+
+        <div id="podium" class="podium-grid"></div>
+
+        <div class="standings-card">
+          <p class="section-kicker">Final Standings</p>
+          <div id="standings-list" class="standings-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
